@@ -1,0 +1,21 @@
+{
+  "name": "PhotoScreensaver Dev",
+  "image": "mcr.microsoft.com/dotnet/sdk:8.0",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.vscode-dotnet-runtime"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "PhotoScreensaver.sln"
+      }
+    }
+  },
+  "postCreateCommand": "dotnet restore",
+  "remoteUser": "root"
+}

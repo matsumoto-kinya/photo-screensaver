@@ -1,0 +1,207 @@
+<Window x:Class="MyPhotoScreensaver.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="フォトスクリーンセーバー 設定"
+        Width="520" Height="600"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E2E"
+        Foreground="#CDD6F4"
+        FontFamily="Yu Gothic UI, Segoe UI"
+        FontSize="13">
+
+    <Window.Resources>
+        <!-- Dark Fluent-inspired styles -->
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#89B4FA"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="0,10,0,3"/>
+        </Style>
+
+        <Style x:Key="ControlLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="CaretBrush" Value="#CDD6F4"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#45475A"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#585B70"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#313244"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#89B4FA"/>
+            <Setter Property="Foreground" Value="#1E1E2E"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#B4BEFE"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#1E1E2E"/>
+            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#1E1E2E"/>
+        </Style>
+
+        <Style TargetType="Slider">
+            <Setter Property="Foreground" Value="#89B4FA"/>
+        </Style>
+
+        <Style TargetType="Separator">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Padding="20,16,20,16">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="フォトスクリーンセーバー"
+                           FontSize="18" FontWeight="Bold"
+                           Foreground="#CDD6F4"/>
+                <TextBlock Text="設定をカスタマイズして、あなただけのスライドショーを"
+                           Foreground="#6C7086" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- Settings body -->
+            <StackPanel Grid.Row="1">
+
+                    <!-- Image Folder -->
+                    <TextBlock Text="画像" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="画像フォルダ" Style="{StaticResource ControlLabel}" Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="FolderTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="参照…" Click="BrowseFolder_Click"/>
+                    </Grid>
+
+                    <!-- Display duration -->
+                    <TextBlock Text="表示" Style="{StaticResource SectionLabel}"/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource ControlLabel}">
+                                各画像の表示時間：<Run x:Name="DisplaySecondsLabel" Text="5"/>秒
+                            </TextBlock>
+                            <Slider x:Name="DisplaySecondsSlider"
+                                    Minimum="1" Maximum="60" TickFrequency="1"
+                                    IsSnapToTickEnabled="True"
+                                    ValueChanged="DisplaySecondsSlider_ValueChanged"
+                                    Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Transition -->
+                    <TextBlock Text="トランジション" Style="{StaticResource SectionLabel}"/>
+                    <TextBlock Text="エフェクト" Style="{StaticResource ControlLabel}" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="TransitionComboBox" Margin="0,0,0,6">
+                        <ComboBoxItem Content="フェードイン/アウト" Tag="Fade"/>
+                        <ComboBoxItem Content="スライド（左から）" Tag="SlideLeft"/>
+                        <ComboBoxItem Content="スライド（右から）" Tag="SlideRight"/>
+                        <ComboBoxItem Content="スライド（上から）" Tag="SlideUp"/>
+                        <ComboBoxItem Content="スライド（下から）" Tag="SlideDown"/>
+                        <ComboBoxItem Content="ズームイン" Tag="ZoomIn"/>
+                        <ComboBoxItem Content="ディゾルブ" Tag="Dissolve"/>
+                        <ComboBoxItem Content="パネル（タイルスライド）" Tag="Panel"/>
+                        <ComboBoxItem Content="ランダム" Tag="Random"/>
+                    </ComboBox>
+
+                    <Grid Margin="0,0,0,4">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ControlLabel}">
+                                トランジション速度：<Run x:Name="TransitionSpeedLabel" Text="0.8"/>秒
+                            </TextBlock>
+                            <Slider x:Name="TransitionSpeedSlider"
+                                    Minimum="0.2" Maximum="3.0" TickFrequency="0.1"
+                                    IsSnapToTickEnabled="True"
+                                    ValueChanged="TransitionSpeedSlider_ValueChanged"
+                                    Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Fit mode -->
+                    <TextBlock Text="表示方法" Style="{StaticResource SectionLabel}"/>
+                    <ComboBox x:Name="FitModeComboBox" Margin="0,0,0,6">
+                        <ComboBoxItem Content="レターボックス（画像全体を表示）" Tag="Letterbox"/>
+                        <ComboBoxItem Content="クロップ（画面いっぱいに拡大）" Tag="Crop"/>
+                    </ComboBox>
+
+                    <!-- Shuffle -->
+                    <CheckBox x:Name="ShuffleCheckBox" Content="シャッフル再生（ランダム順で表示）"
+                              Margin="0,6,0,0"/>
+
+            </StackPanel>
+
+            <!-- Footer buttons -->
+            <Grid Grid.Row="2" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="1" Content="プレビュー" Click="Preview_Click" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="キャンセル" Click="Cancel_Click" Margin="0,0,8,0"/>
+                <Button Grid.Column="3" Content="OK" Style="{StaticResource AccentButton}"
+                        Click="OK_Click" MinWidth="80"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
