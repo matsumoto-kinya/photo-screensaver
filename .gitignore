@@ -3,6 +3,8 @@ bin/
 obj/
 publish/
 .publish/
+Output/
+publish-installer/
 
 # Claude Code local settings
 .claude/settings.local.json

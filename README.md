@@ -58,7 +58,33 @@ dotnet publish -c Release -r win-x64 --self-contained false -o ./publish
 
 ## インストール手順
 
-### 方法 1：PowerShell スクリプト（推奨）
+### 方法 1：インストーラー（推奨）
+
+#### インストーラーのビルド（Windows 上で実施）
+
+1. [Inno Setup 6](https://jrsoftware.org/isinfo.php) をインストール
+2. シングルファイルパブリッシュを実行：
+   ```powershell
+   dotnet publish -c Release -r win-x64 --self-contained true `
+     -p:PublishSingleFile=true -o .\publish-installer
+   ```
+3. `installer.iss` を Inno Setup Compiler で開いてビルド、またはコマンドラインで実行：
+   ```powershell
+   iscc installer.iss
+   ```
+4. `Output\MyPhotoScreensaverSetup.exe` が生成される
+
+#### インストーラーの実行
+
+`MyPhotoScreensaverSetup.exe` をダブルクリックし、ウィザードに従って進めるだけです。  
+UAC プロンプトが表示されたら「はい」を選択してください。
+
+- **配布先に .NET 8 は不要**（ランタイムを同梱済み）
+- インストール完了後、"アプリと機能" からアンインストール可能
+
+---
+
+### 方法 2：PowerShell スクリプト
 
 **管理者権限の PowerShell** で以下を実行します：
 
@@ -69,14 +95,20 @@ dotnet publish -c Release -r win-x64 --self-contained false -o ./publish
 スクリプトが自動的に：
 1. `MyPhotoScreensaver.exe` を `MyPhotoScreensaver.scr` にコピー
 2. `C:\Windows\System32\` に配置
-3. スクリーンセーバーとして登録
+3. 依存 DLL / JSON ファイルを System32 にコピー
 
-### 方法 2：手動インストール
+アンインストールする場合：
+```powershell
+.\install.ps1 -Uninstall
+```
+
+### 方法 3：手動インストール
 
 1. ビルドで生成された `MyPhotoScreensaver.exe` を `MyPhotoScreensaver.scr` にコピー
 2. `C:\Windows\System32\MyPhotoScreensaver.scr` にコピー（管理者権限が必要）
-3. デスクトップを右クリック → 「個人用設定」 → 「ロック画面」 → 「スクリーンセーバー設定」
-4. スクリーンセーバーの一覧から **MyPhotoScreensaver** を選択
+3. 同ディレクトリの `.dll` / `.json` ファイルも System32 にコピー
+4. デスクトップを右クリック → 「個人用設定」 → 「ロック画面」 → 「スクリーンセーバー設定」
+5. スクリーンセーバーの一覧から **MyPhotoScreensaver** を選択
 
 ---
 
@@ -133,6 +165,7 @@ dotnet publish -c Release -r win-x64 --self-contained false -o ./publish
 | `SlideDown` | 下からスライドイン |
 | `ZoomIn` | ズームイン |
 | `Dissolve` | ディゾルブ |
+| `Panel` | 複数画像をグリッド表示してコンベア式に入れ替え |
 | `Random` | ランダムに選択 |
 
 ---
