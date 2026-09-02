@@ -34,6 +34,13 @@ public class PanelController : IDisposable
     private readonly IEasingFunction _ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
     private bool _animating;
 
+    // Dispose 後に動き続けないための後始末用。
+    // 実行中の Storyboard は Stop() しない限り、閉じたウィンドウ上でも回り続ける。
+    // Stop() では Completed が来ないことがあるため、待機側を解放できるよう
+    // TaskCompletionSource も一緒に持っておく。
+    private readonly List<(Storyboard Sb, TaskCompletionSource Tcs)> _active = new();
+    private bool _disposed;
+
     // StartAsync で確定する
     private int         _cols;
     private WpfImage[,] _images        = null!;
@@ -92,6 +99,7 @@ public class PanelController : IDisposable
         for (int i = 0; i < sampleCount; i++)
         {
             var bmp = await Task.Run(() => _imageService.GetNext());
+            if (_disposed) return;          // 先読み中に終了された
             if (bmp != null) samples.Add(bmp);
         }
         if (samples.Count == 0) return;
@@ -125,12 +133,14 @@ public class PanelController : IDisposable
                 BitmapImage? bmp = idx < samples.Count
                     ? samples[idx++]
                     : await Task.Run(() => _imageService.GetNext());
+                if (_disposed) return;
                 _images[c, r].Source  = bmp;
                 _naturalWidths[c, r]  = NaturalWidth(bmp);
             }
             ApplyRowLayout(r);
         }
 
+        if (_disposed) return;              // Dispose 済みならタイマーを起動しない
         _timer.Start();
     }
 
@@ -152,7 +162,7 @@ public class PanelController : IDisposable
 
     private async Task RunReplacementAsync()
     {
-        if (_animating || _cols == 0) return;
+        if (_animating || _cols == 0 || _disposed) return;
         _animating = true;
         _timer.Stop();
         try
@@ -183,7 +193,7 @@ public class PanelController : IDisposable
         finally
         {
             _animating = false;
-            _timer.Start();
+            if (!_disposed) _timer.Start();
         }
     }
 
@@ -203,9 +213,11 @@ public class PanelController : IDisposable
         // ── Step 1: 対象セルが画面外へスライドアウト ──────────────────────
         double exitDestX = goRight ? _width : -curWidths[exitCol];
         await MoveAsync(exitImg, exitDestX, row * _cellH, d * 0.3);
+        if (_disposed) return;
 
         // ── 新画像ロード & 新レイアウト計算 ───────────────────────────────
         var newBmp  = await Task.Run(() => _imageService.GetNext());
+        if (_disposed) return;
         double newNW = NaturalWidth(newBmp);
 
         // 新しい自然幅配列（コンベア方向に1つシフト + 新画像を端に挿入）
@@ -256,6 +268,7 @@ public class PanelController : IDisposable
         tasks.Add(MoveAsync(exitImg, newXs[entryCol], row * _cellH, d * 0.7));
 
         await Task.WhenAll(tasks);
+        if (_disposed) return;
 
         // ── グリッド状態を更新 ────────────────────────────────────────────
         var newImages = new WpfImage[_cols];
@@ -307,6 +320,7 @@ public class PanelController : IDisposable
         foreach (var t in targets)
         {
             var bmp = await Task.Run(() => _imageService.GetNext());
+            if (_disposed) return;
             if (bmp == null) continue;
 
             jobs.Add(new CellJob
@@ -374,6 +388,7 @@ public class PanelController : IDisposable
         }
 
         await Task.WhenAll(tasks);
+        if (_disposed) return;
 
         // ── Step 5: 退場した Image を Canvas から取り除く ─────────────────
         foreach (var j in jobs)
@@ -418,8 +433,10 @@ public class PanelController : IDisposable
             Anim(front, 1.00, 1.12, new PropertyPath("RenderTransform.ScaleY"));
         }
 
+        _active.Add((sb, tcs));
         sb.Completed += (_, _) =>
         {
+            _active.RemoveAll(x => x.Sb == sb);
             sb.Stop();                     // Stop() でアニメ値が外れるので確定値を入れ直す
             back.Opacity         = 1;
             back.RenderTransform = null;
@@ -461,8 +478,10 @@ public class PanelController : IDisposable
         Storyboard.SetTargetProperty(swap, new PropertyPath(WpfImage.SourceProperty));
         sb.Children.Add(swap);
 
+        _active.Add((sb, tcs));
         sb.Completed += (_, _) =>
         {
+            _active.RemoveAll(x => x.Sb == sb);
             sb.Stop();
             img.Source          = bmp;     // Stop() で元に戻るので明示的に確定させる
             img.RenderTransform = null;
@@ -574,8 +593,10 @@ public class PanelController : IDisposable
         Anim(fromW, toW, new PropertyPath(FrameworkElement.WidthProperty));
         Anim(fromH, toH, new PropertyPath(FrameworkElement.HeightProperty));
 
+        _active.Add((sb, tcs));
         sb.Completed += (_, _) =>
         {
+            _active.RemoveAll(x => x.Sb == sb);
             Canvas.SetLeft(img, toX); Canvas.SetTop(img, toY);
             img.Width = toW; img.Height = toH;
             sb.Stop();
@@ -585,5 +606,29 @@ public class PanelController : IDisposable
         return tcs.Task;
     }
 
-    public void Dispose() => _timer.Stop();
+    /// <summary>
+    /// タイマーを止め、実行中のアニメーションをすべて停止する。
+    /// Storyboard は Stop() しない限り、閉じたウィンドウの Visual 上でも回り続けるため、
+    /// ここで明示的に止める必要がある。
+    /// ScreensaverWindow からは ExitScreensaver と OnClosed の両方で呼ばれるので、
+    /// 二重呼び出しに耐えること。
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _timer.Stop();
+
+        // Stop() は Completed を発火して _active を書き換えうるので、スナップショットを回す
+        foreach (var (sb, tcs) in _active.ToArray())
+        {
+            try { sb.Stop(); }
+            catch (InvalidOperationException) { /* 既に切り離された Storyboard */ }
+            // Stop() では Completed が来ないことがある。解放しないと
+            // await している ReplaceRowAsync / ReplaceCellsAsync が永久に残る。
+            tcs.TrySetResult();
+        }
+        _active.Clear();
+    }
 }
