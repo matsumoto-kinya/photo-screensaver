@@ -163,6 +163,20 @@
                         <ComboBoxItem Content="ランダム" Tag="Random"/>
                     </ComboBox>
 
+                    <!-- Panel mode (パネル選択時のみ有効) -->
+                    <StackPanel x:Name="PanelModePanel" Margin="0,0,0,6">
+                        <TextBlock Text="パネルの入れ替え方" Style="{StaticResource ControlLabel}"
+                                   Margin="0,0,0,4"/>
+                        <ComboBox x:Name="PanelModeComboBox">
+                            <ComboBoxItem Content="コンベア（行の端から流し込む）"     Tag="Conveyor"/>
+                            <ComboBoxItem Content="1枚ずつクロスフェード"             Tag="SingleCell"/>
+                            <ComboBoxItem Content="ズームで差し替え（3枚ずつ）"       Tag="CellZoom"/>
+                            <ComboBoxItem Content="フリップで差し替え（2枚ずつ）"     Tag="CellFlip"/>
+                            <ComboBoxItem Content="対角ウェーブ"                     Tag="DiagonalWave"/>
+                            <ComboBoxItem Content="列ごとに一斉"                     Tag="ColumnWave"/>
+                        </ComboBox>
+                    </StackPanel>
+
                     <Grid Margin="0,0,0,4">
                         <StackPanel>
                             <TextBlock Style="{StaticResource ControlLabel}">

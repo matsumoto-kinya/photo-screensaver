@@ -27,6 +27,19 @@ public partial class SettingsWindow : Window
 
         SelectComboItem(TransitionComboBox, _settings.Transition.ToString());
         SelectComboItem(FitModeComboBox, _settings.FitMode.ToString());
+        SelectComboItem(PanelModeComboBox, _settings.PanelMode.ToString());
+
+        // パネル以外を選んでいる間は「パネルの入れ替え方」を触れないようにする
+        TransitionComboBox.SelectionChanged += (_, _) => UpdatePanelModeState();
+        UpdatePanelModeState();
+    }
+
+    private void UpdatePanelModeState()
+    {
+        bool isPanel = TransitionComboBox.SelectedItem is WpfComboBoxItem item
+                       && (item.Tag as string) == nameof(TransitionType.Panel);
+        PanelModePanel.IsEnabled = isPanel;
+        PanelModePanel.Opacity   = isPanel ? 1.0 : 0.4;
     }
 
     private static void SelectComboItem(WpfComboBox combo, string tag)
@@ -99,5 +112,8 @@ public partial class SettingsWindow : Window
 
         if (FitModeComboBox.SelectedItem is WpfComboBoxItem fi && fi.Tag is string ft)
             _settings.FitMode = Enum.Parse<FitMode>(ft);
+
+        if (PanelModeComboBox.SelectedItem is WpfComboBoxItem pi && pi.Tag is string pt)
+            _settings.PanelMode = Enum.Parse<PanelMode>(pt);
     }
 }

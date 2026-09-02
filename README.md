@@ -141,7 +141,8 @@ UAC プロンプトが表示されたら「はい」を選択してください�
   "Transition": "Fade",
   "TransitionSpeed": 0.8,
   "FitMode": "Letterbox",
-  "Shuffle": true
+  "Shuffle": true,
+  "PanelMode": "Conveyor"
 }
 ```
 
@@ -153,6 +154,7 @@ UAC プロンプトが表示されたら「はい」を選択してください�
 | `TransitionSpeed` | float | トランジション時間（秒） |
 | `FitMode` | string | `Letterbox` または `Crop` |
 | `Shuffle` | bool | シャッフル再生 |
+| `PanelMode` | string | パネルの入れ替え方（`Transition` が `Panel` のときのみ有効） |
 
 ### Transition の値
 
@@ -165,8 +167,25 @@ UAC プロンプトが表示されたら「はい」を選択してください�
 | `SlideDown` | 下からスライドイン |
 | `ZoomIn` | ズームイン |
 | `Dissolve` | ディゾルブ |
-| `Panel` | 複数画像をグリッド表示してコンベア式に入れ替え |
-| `Random` | ランダムに選択 |
+| `Panel` | 複数画像をグリッド表示して入れ替え（入れ替え方は `PanelMode` で選択） |
+| `Random` | ランダムに選択（`Panel` は含まれません） |
+
+### PanelMode の値
+
+`Transition` が `Panel` のときだけ使われます。4行×可変列のグリッドで、どう画像を入れ替えるかを決めます。
+
+| 値 | 説明 | 1回あたり |
+|----|------|-----------|
+| `Conveyor` | 行の端から流し込み、他のセルを押しやる（従来の動作） | 1枚 |
+| `SingleCell` | ランダムな1セルをその場でクロスフェード | 1枚 |
+| `CellZoom` | 縮小→等倍のズームで差し替え | 3枚 |
+| `CellFlip` | 横に潰して開くフリップで差し替え | 2枚 |
+| `DiagonalWave` | 対角線上のセルを順にクロスフェード | 行数ぶん |
+| `ColumnWave` | 同じ列のセルを上から順にクロスフェード | 行数ぶん |
+
+`Conveyor` はセルの移動とリサイズをアニメーションするため毎フレーム レイアウトパスが走ります。
+それ以外はセルを動かさないぶん軽く、また1回に複数枚が入れ替わるため、
+グリッド全体が一巡するまでの時間も短くなります。
 
 ---
 
